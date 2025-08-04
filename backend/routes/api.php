@@ -9,7 +9,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::get('/files', [ProcessedRecordController::class, 'listarArquivos']);
-Route::get('/files/{nome}', [ProcessedRecordController::class, 'mostrarArquivo']);
+Route::get('/files/{id}', [ProcessedRecordController::class, 'mostrarArquivo']);
 
 Route::prefix('processed-records')->group(function () {
     Route::post('/', [ProcessedRecordController::class, 'store']);

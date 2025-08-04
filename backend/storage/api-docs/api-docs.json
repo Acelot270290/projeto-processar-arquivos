@@ -76,17 +76,17 @@
                 }
             }
         },
-        "/api/files/{nome}": {
+        "/api/files/{id}": {
             "get": {
                 "tags": [
                     "Processed Records"
                 ],
                 "summary": "Retorna os registros processados de um arquivo",
                 "description": "Retorna os registros processados de um arquivo específico",
-                "operationId": "ed32fd99260b0c3f227fe88de96a3af4",
+                "operationId": "09d16265342087e9c2bdd1941c5e1973",
                 "parameters": [
                     {
-                        "name": "nome",
+                        "name": "id",
                         "in": "path",
                         "description": "Nome do arquivo",
                         "required": true,
@@ -125,7 +125,7 @@
                                                 "type": "number",
                                                 "format": "float"
                                             },
-                                            "nome_arquivo": {
+                                            "id": {
                                                 "type": "string"
                                             }
                                         },

@@ -63,41 +63,44 @@ class ProcessedRecordController extends Controller
     }
 
     /**
-     * Lista os nomes de arquivos já processados
+     * Lista os arquivos processados com ID e nome
      *
      * @OA\Get(
      *     path="/api/files",
-     *     summary="Retorna os nomes dos arquivos processados",
+     *     summary="Retorna os arquivos processados (id e nome)",
      *     tags={"Processed Records"},
      *     @OA\Response(
      *         response=200,
-     *         description="Lista de nomes de arquivos",
+     *         description="Lista de arquivos",
      *         @OA\JsonContent(
      *             type="array",
-     *             @OA\Items(type="string", example="exemplo_dados.csv")
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="nome_arquivo", type="string", example="exemplo.csv")
+     *             )
      *         )
      *     )
      * )
      */
     public function listarArquivos(): JsonResponse
     {
-        $nomes = ProcessedRecord::whereNotNull('nome_arquivo')
-            ->distinct()
+        $nomes = ProcessedRecord::select('id', 'nome_arquivo')
             ->orderBy('nome_arquivo')
-            ->pluck('nome_arquivo');
+            ->get();
 
         return response()->json($nomes);
     }
+
 
     /**
      * Retorna os registros processados de um arquivo específico
      *
      * @OA\Get(
-     *     path="/api/files/{nome}",
+     *     path="/api/files/{id}",
      *     summary="Retorna os registros processados de um arquivo",
      *     tags={"Processed Records"},
      *     @OA\Parameter(
-     *         name="nome",
+     *         name="id",
      *         in="path",
      *         description="Nome do arquivo",
      *         required=true,
@@ -115,16 +118,16 @@ class ProcessedRecordController extends Controller
      *                 @OA\Property(property="metrica_b", type="number", format="float"),
      *                 @OA\Property(property="indicador_x", type="number", format="float"),
      *                 @OA\Property(property="indicador_y", type="number", format="float"),
-     *                 @OA\Property(property="nome_arquivo", type="string")
+     *                 @OA\Property(property="id", type="string")
      *             )
      *         )
      *     )
      * )
      */
 
-    public function mostrarArquivo(string $nome): JsonResponse
+    public function mostrarArquivo(string $id): JsonResponse
     {
-        $registros = ProcessedRecord::where('nome_arquivo', $nome)->get();
+        $registros = ProcessedRecord::where('id', $id)->firstOrFail();
 
         return response()->json($registros);
     }
