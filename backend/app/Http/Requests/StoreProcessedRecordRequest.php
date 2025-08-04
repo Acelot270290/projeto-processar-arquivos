@@ -13,6 +13,7 @@ class StoreProcessedRecordRequest extends FormRequest
 
     public function rules(): array
     {
+
         return [
             'file' => 'required|file|mimes:txt,csv,json,xml|max:10240'
         ];

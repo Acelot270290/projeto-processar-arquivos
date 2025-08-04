@@ -6,8 +6,9 @@ use App\Http\Requests\StoreProcessedRecordRequest;
 use App\Repositories\ProcessedRecordRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use OpenApi\Annotations as OA;
+use App\Models\ProcessedRecord;
+use Illuminate\Support\Facades\DB;
 
 class ProcessedRecordController extends Controller
 {
@@ -50,40 +51,81 @@ class ProcessedRecordController extends Controller
      *     )
      * )
      */
-
-
-public function store(StoreProcessedRecordRequest $request): JsonResponse
-{
-    try {
+    public function store(StoreProcessedRecordRequest $request): JsonResponse
+    {
         $file = $request->file('file');
-
-        if (!$file) {
-            return response()->json(['error' => 'Nenhum arquivo enviado.'], 400);
-        }
-
-        Log::info('📂 Upload recebido', [
-            'originalName' => $file->getClientOriginalName(),
-            'mimeType' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
-
         $dados = $this->repository->processAndStore($file);
 
         return response()->json([
             'message' => 'Arquivo processado com sucesso',
             'data' => $dados,
         ]);
-    } catch (\Throwable $e) {
-        Log::error('❌ Erro ao processar arquivo:', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return response()->json([
-            'error' => 'Erro interno ao processar o arquivo',
-            'exception' => $e->getMessage(), // opcional, remova em produção
-        ], 500);
     }
-}
 
+    /**
+     * Lista os nomes de arquivos já processados
+     *
+     * @OA\Get(
+     *     path="/api/files",
+     *     summary="Retorna os nomes dos arquivos processados",
+     *     tags={"Processed Records"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de nomes de arquivos",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(type="string", example="exemplo_dados.csv")
+     *         )
+     *     )
+     * )
+     */
+    public function listarArquivos(): JsonResponse
+    {
+        $nomes = ProcessedRecord::whereNotNull('nome_arquivo')
+            ->distinct()
+            ->orderBy('nome_arquivo')
+            ->pluck('nome_arquivo');
+
+        return response()->json($nomes);
+    }
+
+    /**
+     * Retorna os registros processados de um arquivo específico
+     *
+     * @OA\Get(
+     *     path="/api/files/{nome}",
+     *     summary="Retorna os registros processados de um arquivo",
+     *     tags={"Processed Records"},
+     *     @OA\Parameter(
+     *         name="nome",
+     *         in="path",
+     *         description="Nome do arquivo",
+     *         required=true,
+     *         @OA\Schema(type="string", example="exemplo_dados.csv")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Registros do arquivo",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="data_registro", type="string", format="date"),
+     *                 @OA\Property(property="metrica_a", type="number", format="float"),
+     *                 @OA\Property(property="metrica_b", type="number", format="float"),
+     *                 @OA\Property(property="indicador_x", type="number", format="float"),
+     *                 @OA\Property(property="indicador_y", type="number", format="float"),
+     *                 @OA\Property(property="nome_arquivo", type="string")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
+    public function mostrarArquivo(string $nome): JsonResponse
+    {
+        $registros = ProcessedRecord::where('nome_arquivo', $nome)->get();
+
+        return response()->json($registros);
+    }
 }

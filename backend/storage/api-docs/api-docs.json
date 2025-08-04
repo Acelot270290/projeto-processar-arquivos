@@ -49,6 +49,94 @@
                     }
                 }
             }
+        },
+        "/api/files": {
+            "get": {
+                "tags": [
+                    "Processed Records"
+                ],
+                "summary": "Retorna os nomes dos arquivos processados",
+                "description": "Lista os nomes de arquivos já processados",
+                "operationId": "4c0e22c190cf94ec833543aada5330f1",
+                "responses": {
+                    "200": {
+                        "description": "Lista de nomes de arquivos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "example": "exemplo_dados.csv"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/files/{nome}": {
+            "get": {
+                "tags": [
+                    "Processed Records"
+                ],
+                "summary": "Retorna os registros processados de um arquivo",
+                "description": "Retorna os registros processados de um arquivo específico",
+                "operationId": "ed32fd99260b0c3f227fe88de96a3af4",
+                "parameters": [
+                    {
+                        "name": "nome",
+                        "in": "path",
+                        "description": "Nome do arquivo",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "exemplo_dados.csv"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registros do arquivo",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "data_registro": {
+                                                "type": "string",
+                                                "format": "date"
+                                            },
+                                            "metrica_a": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "metrica_b": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "indicador_x": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "indicador_y": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "nome_arquivo": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "tags": [

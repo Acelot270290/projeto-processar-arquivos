@@ -2,21 +2,12 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use App\Repositories\ProcessedRecordRepository;
+use App\Models\ProcessedRecord;
 use Illuminate\Support\Collection;
 use SimpleXMLElement;
 
 class ProcessedRecordService
 {
-    protected $repository;
-
-    public function __construct(ProcessedRecordRepository $repository)
-    {
-        $this->repository = $repository;
-    }
-
     /**
      * Processa o arquivo enviado, detecta tipo, converte e salva registros.
      */
@@ -24,6 +15,7 @@ class ProcessedRecordService
     {
         $extension = strtolower($uploadedFile->getClientOriginalExtension());
         $content = file_get_contents($uploadedFile->getRealPath());
+        // dd($content);
 
         switch ($extension) {
             case 'json':
@@ -47,9 +39,11 @@ class ProcessedRecordService
         }
 
         $normalized = $this->normalizeData($parsedData);
+        $nomeArquivo = $uploadedFile->getClientOriginalName();
 
         foreach ($normalized as $registro) {
-            $this->repository->create($registro);
+            $registro['nome_arquivo'] = $nomeArquivo; // <-- adiciona ao array antes de salvar
+            ProcessedRecord::create($registro);
         }
 
         return $normalized;
@@ -62,19 +56,28 @@ class ProcessedRecordService
 
     protected function processCsv(string $content): array
     {
-        $lines = explode(PHP_EOL, $content);
-        $headers = str_getcsv(array_shift($lines), ';');
+        $lines = explode(PHP_EOL, trim($content));
+        if (empty($lines)) return [];
+
+        // Detectar delimitador
+        $firstLine = $lines[0];
+        $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
+
+        $headers = str_getcsv(array_shift($lines), $delimiter);
         $data = [];
 
         foreach ($lines as $line) {
             if (trim($line) === '') continue;
 
-            $values = str_getcsv($line, ';');
+            $values = str_getcsv($line, $delimiter);
+            if (count($values) !== count($headers)) continue;
+
             $data[] = array_combine($headers, $values);
         }
 
         return $data;
     }
+
 
     protected function processTxt(string $content): array
     {
@@ -86,10 +89,10 @@ class ProcessedRecordService
             $parts = preg_split('/\s+/', $line);
             $data[] = [
                 'data_registro' => $parts[0] ?? null,
-                'metrica_a' => $parts[1] ?? null,
-                'metrica_b' => $parts[2] ?? null,
-                'indicador_x' => $parts[3] ?? null,
-                'indicador_y' => $parts[4] ?? null,
+                'metrica_a'     => $parts[1] ?? null,
+                'metrica_b'     => $parts[2] ?? null,
+                'indicador_x'   => $parts[3] ?? null,
+                'indicador_y'   => $parts[4] ?? null,
             ];
         }
 
@@ -104,10 +107,10 @@ class ProcessedRecordService
         foreach ($xml->registro as $registro) {
             $data[] = [
                 'data_registro' => (string) $registro->data_registro,
-                'metrica_a' => (string) $registro->metrica_a,
-                'metrica_b' => (string) $registro->metrica_b,
-                'indicador_x' => (string) $registro->indicador_x,
-                'indicador_y' => (string) $registro->indicador_y,
+                'metrica_a'     => (string) $registro->metrica_a,
+                'metrica_b'     => (string) $registro->metrica_b,
+                'indicador_x'   => (string) $registro->indicador_x,
+                'indicador_y'   => (string) $registro->indicador_y,
             ];
         }
 
@@ -117,15 +120,40 @@ class ProcessedRecordService
     protected function normalizeData(array $rawData): array
     {
         return collect($rawData)->map(function ($item) {
-            return [
-                'data_registro' => $item['data_registro'] ?? null,
-                'metrica_a'     => $this->parseNumber($item['metrica_a'] ?? null),
-                'metrica_b'     => $this->parseNumber($item['metrica_b'] ?? null),
-                'indicador_x'   => $this->parseNumber($item['indicador_x'] ?? null),
-                'indicador_y'   => $this->parseNumber($item['indicador_y'] ?? null),
+            // Detecta valores numéricos para cada métrica
+            $metrica_a = $this->parseNumber($item['metrica_a'] ?? $item['idade'] ?? null);
+            $metrica_b = $this->parseNumber($item['metrica_b'] ?? null);
+            $indicador_x = $this->parseNumber($item['indicador_x'] ?? null);
+            $indicador_y = $this->parseNumber($item['indicador_y'] ?? null);
+
+            // Define os campos que foram usados como métricas
+            $camposUsados = [
+                'data_registro',
+                'metrica_a',
+                'metrica_b',
+                'indicador_x',
+                'indicador_y',
+                'idade'
             ];
+
+            $data = [
+                'data_registro' => $item['data_registro'] ?? now()->toDateString(),
+                'metrica_a'     => $metrica_a,
+                'metrica_b'     => $metrica_b,
+                'indicador_x'   => $indicador_x,
+                'indicador_y'   => $indicador_y,
+            ];
+
+            // O restante vai para o campo extra
+            $extra = collect($item)->except($camposUsados)->toArray();
+            $data['extra'] = !empty($extra) ? json_encode($extra) : null;
+
+            return $data;
         })->all();
     }
+
+
+
 
     protected function parseNumber($value): ?float
     {
