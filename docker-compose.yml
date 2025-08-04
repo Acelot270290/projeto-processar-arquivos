@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  backend-app:
+    build:
+      context: ./backend
+    container_name: laravel-app
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  backend-nginx:
+    image: nginx:stable
+    container_name: laravel-nginx
+    ports:
+      - "9584:80"
+    volumes:
+      - ./backend:/var/www
+      - ./backend/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend-app
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: vue-frontend
+    ports:
+      - "5177:5177"
+    volumes:
+      - ./frontend:/app
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_DATABASE: desafio
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  mysql-data:
