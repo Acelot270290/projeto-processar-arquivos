@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('processed_records', function (Blueprint $table) {
             $table->id();
+            $table->date('data_registro')->nullable();
+            $table->decimal('metrica_a', 20, 4)->nullable();
+            $table->decimal('metrica_b', 20, 4)->nullable();
+            $table->decimal('indicador_x', 20, 4)->nullable();
+            $table->decimal('indicador_y', 20, 4)->nullable();
+            $table->json('extra')->nullable();
             $table->timestamps();
         });
     }

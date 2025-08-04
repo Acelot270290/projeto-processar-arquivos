@@ -1,0 +1,60 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Desafio Fullstack API",
+        "description": "Documentação da API de upload e processamento de arquivos",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:9584",
+            "description": "Servidor local"
+        }
+    ],
+    "paths": {
+        "/api/processed-records": {
+            "post": {
+                "tags": [
+                    "Processed Records"
+                ],
+                "summary": "Faz upload de um arquivo e salva os registros processados",
+                "description": "Upload e processamento de arquivo",
+                "operationId": "21bd31c908c112970345b6ae61bfcf2c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "Arquivo a ser processado",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Arquivo processado com sucesso"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Processed Records",
+            "description": "Processed Records"
+        }
+    ]
+}
